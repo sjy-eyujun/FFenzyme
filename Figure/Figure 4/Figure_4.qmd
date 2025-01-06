@@ -1,0 +1,116 @@
+---
+title: "Assessment of Enzyme Resources and Diversity in the Fermented Food Microbiome"
+author: "P.L. and J.S."
+format: html
+editor: visual
+---
+
+## Figure 4
+
+```{r}
+rm(list = ls())
+library(data.table)
+library(ggplot2)
+library(viridis)
+library(lessR)
+library(tidyr)
+library(gghalves)
+library(ggsci)
+library(EnvStats)
+library(see)
+library(patchwork)
+library(ggpmisc)
+```
+
+```{r}
+test1 <- fread("./cFMD_metadata.tsv")
+test2 <- fread("./cFMD_sgbs_prokaryotic.tsv")
+source_data_4 <- read.csv("./source_data_4.csv")
+```
+
+```{r}
+index0 <- readxl::read_xlsx("./country_2_contient.xlsx",col_names = F)|>data.table()
+
+index0$country <- index0$...1|>stringr::str_sub(3,10)|>stringr::str_extract("[:graph:]*")
+index0$continent <- lapply(index0$...1,function(x){
+  return(stringr::str_split(x,"\\|")[1][[1]][4])
+})|>unlist()
+index0$continent <- index0$continent |>stringr::str_extract("(?<= )[:graph:]*.*[[:graph:]]*")
+index0$...1 <- c()
+
+source_data_4$country[!source_data_4$country %in% index0$country]|>unique()
+source_data_4 <- index0[source_data_4,on= c("country")]
+
+
+source_data_4$continent[source_data_4$country %in% c("HKG","KOR")] <- "Asia"
+source_data_4$continent[source_data_4$country %in% c("ALA")] <- "Europe"
+source_data_4$continent[source_data_4$continent %in% c("Asia          ","Asia/Europe    ")] <- "Asia"
+source_data_4$continent[source_data_4$continent %in% c("Europe/Asia   ","Europe        ")] <- "Europe"
+source_data_4$continent[source_data_4$continent %in% c("Africa        ")] <- "Africa"
+source_data_4$continent[source_data_4$continent %in% c("Oceania       ")] <- "Oceania"
+```
+
+```{r}
+library(ggpubr)
+#pal_simpsons("springfield")(8)
+figure_4_b_1 <- ggplot(source_data_4, aes(x=category,
+             y=cluster_div,
+             fill=continent)) +
+  # stat_boxplot(geom = "errorbar", width=0.3,linewidth=0.6)+
+  geom_boxplot(outlier.shape = 18,size=0.5)+
+  stat_n_text(y.pos = 4.45,size = 3) + 
+  #stat_compare_means(method = "anova", label.y = 40)+ # Add global p-value
+  #stat_compare_means(aes(label = after_stat(p.signif)),
+  #                method = "t.test", ref.group = "0.5")+
+  scale_color_manual(values=c("#FED439FF","#709AE1FF","#8A9197FF","#D2AF81FF",
+                              "#FD7446FF","#D5E4A2FF","#197EC0FF","#F05C3BFF"))+
+  scale_fill_manual(values=c("#FED439FF","#709AE1FF","#8A9197FF","#D2AF81FF",
+                             "#FD7446FF","#D5E4A2FF","#197EC0FF","#F05C3BFF"))+
+  scale_y_log10()+
+  coord_flip()+
+  theme_classic()+
+  labs(x = "") +
+  theme(legend.position = "none")
+
+
+
+
+figure_4_b_2 <- ggplot(source_data_4, aes(x=category,
+             y=unknown_per,
+             fill=continent)) +
+  # stat_boxplot(geom = "errorbar", width=0.3,linewidth=0.6)+
+  geom_boxplot(outlier.shape = 18,size=0.5)+
+  stat_n_text(y.pos = 1.25,size = 3) + 
+  scale_color_manual(values=c("#FED439FF","#709AE1FF","#8A9197FF","#D2AF81FF",
+                              "#FD7446FF","#D5E4A2FF","#197EC0FF","#F05C3BFF"))+
+  scale_fill_manual(values=c("#FED439FF","#709AE1FF","#8A9197FF","#D2AF81FF",
+                             "#FD7446FF","#D5E4A2FF","#197EC0FF","#F05C3BFF"))+
+  coord_flip()+
+  theme_classic()+
+  labs(x = "") +
+  theme(axis.text.y = element_blank())
+figure_4_b_1|figure_4_b_2
+```
+
+```{r}
+source_data_4_5 <- read.csv("./source_data_4_5.csv")
+colnames(source_data_4_5)
+```
+
+```{r}
+figure_4_c <-  ggscatter(source_data_4_5, x = "mag_div", y = "cluster_div",
+               color = "category",
+               size = 2, alpha = 0.6)+
+  stat_correlation(
+                   mapping = use_label(c("R","P","method")),
+                   method = "spearman",alternative = "two.sided",
+                   small.r = F,small.p = T,size=3,r.digits = 3,
+                   label.x = 7000)+
+  scale_color_manual(values=c("#FED439FF","#709AE1FF","#8A9197FF","#D2AF81FF",
+                              "#FD7446FF","#D5E4A2FF","#197EC0FF","#F05C3BFF"))+
+  facet_wrap(category~.,scales = "free_y",ncol = 3)+
+  theme(strip.text.y = element_blank(),
+        panel.grid.major.x = element_line(),
+        legend.position = "none")
+figure_4_c
+```

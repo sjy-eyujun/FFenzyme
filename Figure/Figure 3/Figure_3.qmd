@@ -1,0 +1,187 @@
+---
+title: "Assessment of Enzyme Resources and Diversity in the Fermented Food Microbiome"
+author: "P.L. and J.S."
+format: html
+editor: visual
+---
+
+## Figure 3
+
+```{r}
+rm(list = ls())
+library(data.table)
+library(ggplot2)
+library(viridis)
+library(lessR)
+library(tidyr)
+```
+
+```{r}
+source_data_3_2_1 <- read.csv("./source_data_3_2_1.csv")
+figure_3_a <- ggplot(source_data_3_2_1, aes(x = superkingdom, y = n, fill = how_know)) + 
+  geom_bar(position="dodge", stat="identity",color = "black")+
+  geom_text(aes(label = n),
+            position = position_dodge(0.85),
+            vjust = -1, size = 4)+
+  scale_fill_manual(values = c("#D06D60","#708FBA"))+
+  scale_y_continuous(limits = c(0,max(source_data_3_2_1$n)+2000))+
+  labs(y = "cluster type")+
+  theme_classic()+
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
+figure_3_a
+```
+
+```{r}
+require(UpSetR)
+source_data_3_1_2 <- read.csv("./source_data_3_1_2.csv")
+source_data_3_1_2_meta_data <- read.csv("./source_data_3_1_2_meta_data.csv")
+figure_3_b <- upset(source_data_3_1_2,
+              sets = c("Firmicutes","Proteobacteria","Aquificae","Actinobacteria",
+                        "Cyanobacteria","Planctomycetes","Bacteroidetes","Deinococcus_Thermus",
+                        "Fusobacteria","Candidatus_Saccharibacteria",
+                        "Ascomycota","Mucoromycota","Basidiomycota"),
+              # nintersects=30,
+              nsets = 13,
+              order.by = c("degree", "freq"),
+              decreasing = c(TRUE, TRUE),
+              keep.order = TRUE,
+              sets.x.label = "unique clusters of whole phylum",
+              query.legend = "top", 
+              point.size = 3,
+              line.size = 1,
+              mb.ratio = c(0.7,0.3),
+              mainbar.y.label = "unique clusters",
+              sets.bar.color = c(rep("#D06D60",10),rep("#708FBA",3)),
+              queries = list(
+                          list(
+                            query = elements,
+                            params = list("unique","Bacteria-specific"),
+                            color = "#D06D60",
+                            active = T,
+                            query.name = "Bacteria-specific"
+                               ),
+                          list(
+                            query = elements,
+                            params = list("unique","Eukaryota-specific"),
+                            color = "#708FBA",
+                            active = T,
+                            query.name = "Eukaryota-specific"
+                               ),
+                          list(
+                            query = elements,
+                            params = list("unique","non-specific"),
+                            color = "grey50",
+                            active = T,
+                            query.name = "non-specific"
+                               )
+                              ),
+              set.metadata = list(
+                      data = source_data_3_1_2_meta_data, 
+                      plots = list(
+                                # list(
+                                #       # type = "hist",
+                                #       # column = "n",
+                                #       # colors = c(rep("#D06D60",10),rep("#D06D60",3)),
+                                #       # assign = 20
+                                #      ),
+                                list(
+                                      type = "matrix_rows",
+                                      column = "sets",
+                                      colors = c(
+                                        Firmicutes = "#D06D60",Proteobacteria = "#D06D60",
+                                        Aquificae = "#D06D60",Actinobacteria = "#D06D60",
+                                        Cyanobacteria = "#D06D60",Planctomycetes = "#D06D60",
+                                        Bacteroidetes = "#D06D60",Deinococcus_Thermus = "#D06D60",
+                                        Fusobacteria = "#D06D60",Candidatus_Saccharibacteria = "#D06D60",
+                                        Ascomycota = "#708FBA",Mucoromycota = "#708FBA",Basidiomycota = "#708FBA"),
+                                      alpha = 0.3
+                                    )
+                                  )
+                              )
+              )
+figure_3_b
+```
+
+```{r}
+library(ggsankey)
+source_data_3_1_1 <- read.csv("./source_data_3_1_1.csv")
+figure_3_c <- ggplot(source_data_3_1_1, aes(x = x,
+               next_x = next_x,
+               node = node, 
+               next_node = next_node,
+               fill = node,
+               label = node)) +
+  geom_sankey(flow.alpha = 0.5, node.color = "grey70",type = "alluvial",width = 0.1,flow.color ="grey70") +
+  geom_sankey_text(aes(label = node), size = 4,color = 1, fill = "white",position = position_nudge(x = 0),type = "alluvial") +
+  scale_fill_manual(values = c("#D06D60","#708FBA","#F4FAFE","#4981BF",rep("#D06D60",10),rep("#708FBA",3)))+
+  theme_sankey(base_size = 11) +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_blank(),
+        legend.position = "none",
+        plot.title = element_text(hjust = .5)) 
+figure_3_c
+```
+
+```{r}
+library(EnvStats)
+source_data_3_2_2 <- read.csv("./source_data_3_2_2.csv")
+source_data_3_2_2$phylum <- factor(source_data_3_2_2$phylum,
+                             levels = c(
+                               "Firmicutes","Proteobacteria","Aquificae","Actinobacteria",
+                               "Cyanobacteria","Planctomycetes","Bacteroidetes","Deinococcus_Thermus",
+                               "Fusobacteria","Candidatus_Saccharibacteria",
+                               "Ascomycota","Mucoromycota","Basidiomycota"))
+
+colnames(source_data_3_2_2)
+figure_3_d <- ggplot(source_data_3_2_2, aes(x=phylum, y=unknown_per, fill=superkingdom)) +
+    geom_boxplot(alpha=1) +
+    stat_n_text(y.pos = 1.05,size = 3) + 
+    scale_fill_manual(values = c("#D06D60","#708FBA")) +
+    theme_bw()+
+    theme(legend.position="none",
+          plot.title = element_text(size=11),
+          axis.text.x = element_text(angle = 30,vjust = 0.85,hjust = 0.75)) +
+    xlab("")
+figure_3_d
+```
+
+```{r}
+library(EnvStats)
+source_data_3_3 <- read.csv("./source_data_3_3.csv")
+source_data_3_3$phylum <- factor(source_data_3_3$phylum,
+                             levels = c(
+                               "Firmicutes","Proteobacteria","Aquificae","Actinobacteria",
+                               "Cyanobacteria","Planctomycetes","Bacteroidetes","Deinococcus_Thermus",
+                               "Fusobacteria","Candidatus_Saccharibacteria",
+                               "Ascomycota","Mucoromycota","Basidiomycota"))
+colnames(source_data_3_3)
+figure_3_e <- ggplot(source_data_3_3, aes(x=phylum, y=cluster_div, fill=superkingdom)) +
+    geom_boxplot(alpha=1) +
+    stat_n_text(y.pos = 2400,size = 3) + 
+    scale_fill_manual(values = c("#D06D60","#708FBA")) +
+    theme_bw()+
+    theme(legend.position="none",
+          plot.title = element_text(size=11),
+          axis.text.x = element_text(angle = 30,vjust = 0.85,hjust = 0.75)) +
+    xlab("")
+figure_3_e
+```
+
+```{r}
+library(ggpubr)
+library(ggpmisc)
+figure_3_f <-  ggscatter(source_data_3_3, x = "genome_size", y = "cluster_div",
+               color = "superkingdom",
+               size = 2, alpha = 0.6)+
+  stat_correlation(
+                   mapping = use_label(c("R","P","method")),
+                   method = "spearman",alternative = "two.sided",
+                   small.r = F,small.p = T,size=4,r.digits = 3,
+                   label.x = 7000)+
+  scale_color_manual(values = rev(c("#708FBA","#D06D60")))+
+  facet_grid(superkingdom~.,scales = "free_y")+
+  theme(strip.text.y = element_blank(),
+        panel.grid.major.x = element_line())
+figure_3_f
+```
